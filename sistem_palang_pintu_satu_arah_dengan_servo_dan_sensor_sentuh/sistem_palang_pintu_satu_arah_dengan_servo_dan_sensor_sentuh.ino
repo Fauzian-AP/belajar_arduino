@@ -2,26 +2,23 @@
 
 
 /*
-=============================================================
-       PALANG OTOMATIS: Arduino Uno + Sensor Touch + Servo
-=============================================================
+=========================================================
+   PALANG OTOMATIS: Arduino Uno + Sensor Touch + Servo
+=========================================================
 
-ALUR:
-1. Servo berada pada posisi TUTUP (90°).
-2. Sensor disentuh dan ditahan selama 1,5 detik.
-3. Palang naik perlahan ke posisi BUKA.
-4. Palang tetap terbuka selama 3 detik.
-5. Palang turun perlahan ke posisi TUTUP.
-6. Sentuhan yang terlalu singkat akan diabaikan.
+ALUR: Sensor disentuh & ditahan 1s -> Servo naik perlahan -> Servo tetap terbuka selama 2s -> Servo menutup kembali
+
+Note:
+- Sentuhan kurang dari 1 detik diabaikan.
 
 PEMASANGAN:
-Touch Sensor : SIG -> D2, VCC -> 5V, GND -> GND
-Servo MG90S  : Signal -> D9, VCC -> 5V, GND -> GND
+- Touch Sensor : SIG -> D2, VCC -> 5V, GND -> GND
+- Servo MG90S  : Signal -> D5, VCC -> 5V, GND -> GND
 */
 
 
 // ==================================================
-// 1. PIN
+// 1. KONFIGURASI PIN
 // ==================================================
 
 const int SENSOR_PIN = 2;
@@ -33,7 +30,7 @@ const int SERVO_PIN  = 5;
 // ==================================================
 
 const int CLOSED_POSITION = 90;   // Palang mendatar
-const int OPEN_POSITION   = 180;   // Palang tegak
+const int OPEN_POSITION   = 160;  // Palang tegak
 
 
 // ==================================================
@@ -42,18 +39,16 @@ const int OPEN_POSITION   = 180;   // Palang tegak
 
 // Jeda setiap perpindahan 1 derajat. Semakin besar nilainya, semakin lambat servo bergerak.
 
-const int OPEN_DELAY  = 20;   // Kecepatan saat membuka
-const int CLOSE_DELAY = 30;   // Kecepatan saat menutup
+const int OPEN_DELAY = 10;   // Kecepatan saat membuka
+const int CLOSE_DELAY = 20;   // Kecepatan saat menutup
 
-const unsigned long OPEN_HOLD_TIME = 3000UL;   // Lama palang berada pada posisi terbuka.
-
-const unsigned long TOUCH_HOLD_TIME = 1500UL;   // Lama sensor harus disentuh agar dianggap valid.
-
+const unsigned long OPEN_HOLD_TIME  = 2000UL;   // Lama palang berada pada posisi terbuka.
+const unsigned long TOUCH_HOLD_TIME = 1000UL;   // Lama sensor harus disentuh agar dianggap valid.
 const unsigned long HORN_SETUP_TIME = 5000UL;   // Waktu untuk memasang horn servo saat startup.
 
 
 // ==================================================
-// 4. OBJEK DAN STATUS
+// 4. OBJEK & STATUS
 // ==================================================
 
 Servo barrierServo;
@@ -62,7 +57,7 @@ int currentPosition = CLOSED_POSITION;
 
 
 // ==================================================
-// 5. GERAKKAN SERVO SECARA PERLAHAN
+// 5. GERAKKAN SERVO
 // ==================================================
 
 void moveServoTo(int targetPosition, int delayTime) {
@@ -71,26 +66,28 @@ void moveServoTo(int targetPosition, int delayTime) {
   while (currentPosition != targetPosition) {
     if (currentPosition < targetPosition) {
       currentPosition++;
-    } else {
+    }
+
+    else {
       currentPosition--;
     }
 
     barrierServo.write(currentPosition);
+
     delay(delayTime);
   }
 }
 
 
 // ==================================================
-// 6. MEMERIKSA SENTUHAN
+// 6. MEMERIKSA SENTUHAN SENSOR
 // ==================================================
 
 bool isTouchValid() {
-  // Waktu mulainya
+  // Waktu mulainya.
   unsigned long startTime = millis();
 
   // Sensor harus tetap HIGH selama TOUCH_HOLD_TIME.
-
   while (digitalRead(SENSOR_PIN) == HIGH) {
     if (millis() - startTime >= TOUCH_HOLD_TIME) {
       return true;
@@ -129,19 +126,19 @@ void openAndCloseBarrier() {
 void setup() {
   Serial.begin(9600);
 
-  pinMode(SENSOR_PIN, INPUT);   // Touch sensor sebagai input.
+  // Sensor Sentuh.
+  pinMode(SENSOR_PIN, INPUT);
 
-  barrierServo.attach(SERVO_PIN);   // Hubungkan servo ke pin D9.
+  // Servo.
+  barrierServo.attach(SERVO_PIN);
 
   // Posisi awal palang.
   barrierServo.write(CLOSED_POSITION);
   currentPosition = CLOSED_POSITION;
 
   // Persiapan pemasangan horn servo.
-
   Serial.println("Servo berada di posisi TUTUP.");
   Serial.println("Pasang horn servo sekarang (5 detik)...");
-
   delay(HORN_SETUP_TIME);
 
   Serial.println("Sistem siap.");
@@ -156,24 +153,22 @@ void setup() {
 void loop() {
   // Cek apakah sensor sedang disentuh.
   if (digitalRead(SENSOR_PIN) == HIGH) {
-
     // Periksa apakah sentuhan cukup lama.
     if (isTouchValid()) {
-
       Serial.println("Sentuhan valid -> palang NAIK");
 
+      // Proses Buka Tutup Palang.
       openAndCloseBarrier();
 
       // Tunggu sampai jari dilepas agar palang tidak membuka kembali.
-
       while (digitalRead(SENSOR_PIN) == HIGH) {
         delay(10);
       }
 
-      // Debounce sederhana.
+      // Debounce.
       delay(500);
     }
-    
+
     else {
       Serial.println("Sentuhan terlalu singkat, diabaikan.");
     }

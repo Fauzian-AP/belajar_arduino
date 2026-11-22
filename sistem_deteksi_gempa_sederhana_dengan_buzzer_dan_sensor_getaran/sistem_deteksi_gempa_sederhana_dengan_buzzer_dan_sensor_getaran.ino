@@ -1,21 +1,21 @@
 /*
-================================================
-       ESP32 + VIBRATION SENSOR + BUZZER
-================================================
+===================================================================
+   PENDETEKSI GEMPA SEDERHANA: ESP32 + VIBRATION SENSOR + BUZZER
+===================================================================
 
-FUNGSI:
-- Mendeteksi getaran dari sensor.
-- Saat getaran terdeteksi, alarm aktif selama 8 detik.
-- Buzzer berbunyi secara berkedip:
-    ON  = 200 ms
-    OFF = 150 ms
-- Jika getaran baru terdeteksi selama alarm aktif,
-  waktu alarm diperpanjang kembali menjadi 8 detik.
+ALUR: Sensor menunggu getaran -> Terjadi getaran -> Alarm Buzzer aktif selama 5s -> Jika ada getaran baru, maka alarm diperpanjang 8s -> Jika tidak, maka alarm mati
+
+NOTE:
+- Buzzer berbunyi secara berkedip: ON (200ms), OFF (150ms).
+
+PEMASANGAN:
+- Vibration Sensor : DO -> D34, VCC -> 3V3, GND -> GND
+- Buzzer  : Signal -> D25, GND -> GND
 */
 
 
 // =================================================
-// 1. PIN
+// 1. KONFIGURASI PIN
 // =================================================
 
 const int SENSOR_PIN = 34;
@@ -26,7 +26,7 @@ const int BUZZER_PIN = 25;
 // 2. KONFIGURASI WAKTU
 // =================================================
 
-const unsigned long ALARM_DURATION = 5000UL;
+const unsigned long ALARM_DURATION = 5000UL;   // Durasi alarm & waktu tunngu jika ada getaran baru
 
 const unsigned long BEEP_ON_TIME  = 200UL;
 const unsigned long BEEP_OFF_TIME = 200UL;
